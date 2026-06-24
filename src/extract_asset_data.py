@@ -27,10 +27,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def clean_kraken_data(df: pd.DataFrame, pair_filter: str) -> pd.DataFrame:
+def clean_kraken_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     """
-    Reads dataframe and generates a cleaned CSV filtered by pair:
+    Reads dataframe and generates a cleaned DataFrame filtered by base asset:
     time, pair, type, vol, cost, fee
+
+    Example:
+        asset = "BTC"
+        keeps BTC/EUR, BTC/USD, BTC/USDT, etc.
     """
 
     required_cols = ["time", "pair", "type", "vol", "cost", "fee"]
@@ -39,12 +43,16 @@ def clean_kraken_data(df: pd.DataFrame, pair_filter: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing columns found: {missing}")
 
-    # Filter by pair
-    df = df[df["pair"] == pair_filter]
+    # Extract base asset from pair (e.g. BTC/EUR -> BTC)
+    base_asset = df["pair"].str.split("/").str[0]
 
-    df = df[required_cols].copy()
+    # Filter by asset
+    df = df[base_asset == asset].copy()
 
-    # Order by date
+    # Keep only required columns
+    df = df[required_cols]
+
+    # Order by time (FIFO consistency)
     df = df.sort_values(by="time")
 
     return df
@@ -61,20 +69,3 @@ def build_output_filename(input_file: str, pair: str) -> str:
     pair_clean = pair.replace("/", "_")
 
     return f"{base_name}_{pair_clean}_clean{ext}"
-
-
-def main():
-    args = parse_args()
-
-    output_file = build_output_filename(args.input, args.pair)
-
-    try:
-        df: pd.DataFrame = utils_csv.get_df_from_csv(args.input)
-        df_clean: pd.DataFrame = clean_kraken_data(df, args.pair)
-        utils_csv.write_df_to_csv(df_clean, output_file)
-    except Exception as e:
-        print(f"[ERROR] {e}")
-
-
-if __name__ == "__main__":
-    main()

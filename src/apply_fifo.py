@@ -1,6 +1,11 @@
 import pandas as pd
 from collections import deque
 
+'''
+Add an additional input parameter here, such as target_currency (EUR).
+Also, do the following when "muhney" != target_currency: convert to target_currency using (mult by) get_fx_rate(muhney, target_currency, row_timestamp)
+If buying, then simply do it and add it. If selling, it's yet to be decided what to do although it does not affect our current trades.
+'''
 def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
 
     fifo = deque()
@@ -9,7 +14,8 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     for _, row in df.iterrows():
 
         tx_type = row["type"].strip().lower()
-
+        print(f"row_num: {_}, asset: {row['pair'].split('/')[0]}, muhney: {row['pair'].split('/')[1]}")
+        continue
         # BUY → add lot
         if tx_type == "buy":
             fifo.append({

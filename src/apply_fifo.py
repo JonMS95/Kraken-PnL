@@ -1,4 +1,5 @@
 import pandas as pd
+from collections import deque
 
 def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
 

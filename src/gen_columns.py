@@ -15,18 +15,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def extract_pair(df: pd.DataFrame) -> str:
-    if "pair" not in df.columns:
-        raise ValueError("Column 'pair' not found")
-
-    unique_pairs = df["pair"].dropna().unique()
-
-    if len(unique_pairs) != 1:
-        raise ValueError(f"Expected 1 pair, found: {unique_pairs}")
-
-    return unique_pairs[0]
-
-
 def build_output_filename(input_file: str, pair: str) -> str:
     base, ext = os.path.splitext(os.path.basename(input_file))
     pair_clean = pair.replace("/", "_")
@@ -46,26 +34,23 @@ def calculate_net_amount(row):
 
 
 def gen_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Enriches asset-level dataset (NOT pair-level).
+    """
+
     required = ["time", "pair", "type", "vol", "cost", "fee"]
 
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Missing columns: {missing}")
 
-    # extract pair BEFORE dropping
-    pair = extract_pair(df)
-
     df = df.sort_values(by="time")
 
-    # net amount
+    # net amount (still valid)
     df["net_amount"] = df.apply(calculate_net_amount, axis=1)
 
     # real unit price
     df["real_unit_price"] = df["net_amount"] / df["vol"]
 
-    # remove metadata
-    df = df.drop(columns=["pair"])
-
-    print("[OK] FIFO completed")
 
     return df

@@ -1,7 +1,6 @@
 import pandas as pd
 import argparse
 import os
-from collections import deque
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Kraken FIFO rent calculator")
@@ -70,12 +69,3 @@ def gen_data(df: pd.DataFrame) -> pd.DataFrame:
     print("[OK] FIFO completed")
 
     return df
-
-
-def main():
-    args = parse_args()
-    gen_data(args.input)
-
-
-if __name__ == "__main__":
-    main()

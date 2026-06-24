@@ -4,6 +4,7 @@ from pprint import pprint
 import utils_csv
 from extract_asset_data import clean_kraken_data
 from gen_columns import gen_data
+from apply_fifo import compute_fifo
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Kraken FIFO rent calculator")
@@ -24,10 +25,10 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--pair",
-        "-p",
+        "--asset",
+        "-a",
         required=True,
-        help="Target pair to be inspected"
+        help="Target asset to be inspected"
     )
 
     return parser.parse_args()
@@ -38,12 +39,12 @@ def main() -> None:
     pprint(vars(args))
 
     raw_df: pd.DataFrame = utils_csv.get_df_from_csv(args.input)
-    clean_pair_df: pd.DataFrame = clean_kraken_data(raw_df, pair_filter = args.pair)
-    pair_data_df: pd.DataFrame = gen_data(clean_pair_df)
-    utils_csv.write_df_to_csv(pair_data_df, args.output)
+    clean_asset_df: pd.DataFrame = clean_kraken_data(raw_df, args.asset)
+    utils_csv.write_df_to_csv(clean_asset_df, args.output)
     return
+    pair_data_df: pd.DataFrame = gen_data(clean_pair_df)
     fifo_data_df: pd.DataFrame = compute_fifo(pair_data_df)
-    fifo_data.to_csv(output)
+    utils_csv.write_df_to_csv(fifo_data_df, args.output)
 
 if __name__ == "__main__":
     main()

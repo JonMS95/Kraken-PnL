@@ -40,11 +40,17 @@ def main() -> None:
 
     raw_df: pd.DataFrame = utils_csv.get_df_from_csv(args.input)
     clean_asset_df: pd.DataFrame = clean_kraken_data(raw_df, args.asset)
-    utils_csv.write_df_to_csv(clean_asset_df, args.output)
-    return
-    pair_data_df: pd.DataFrame = gen_data(clean_pair_df)
-    fifo_data_df: pd.DataFrame = compute_fifo(pair_data_df)
-    utils_csv.write_df_to_csv(fifo_data_df, args.output)
+    
+    # utils_csv.write_df_to_csv(clean_asset_df, args.output)
+    # return
+    
+    asset_data_df: pd.DataFrame = gen_data(clean_asset_df)
+    
+    utils_csv.write_df_to_csv(asset_data_df, args.output)
+    
+    # Add an additional input parameter here, such as target currency (EUR)
+    fifo_data_df: pd.DataFrame = compute_fifo(asset_data_df)
+    # utils_csv.write_df_to_csv(fifo_data_df, args.output)
 
 if __name__ == "__main__":
     main()

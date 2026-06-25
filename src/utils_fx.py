@@ -173,20 +173,16 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
 def main():
     print("=== Kraken FX Engine ===")
 
-    human_time = "2022-10-24 16:31:23.2879"
-    # ts = human_to_unix(human_time)
+    ts: str = "2022-10-08 16:31:23.2879"
 
-    print(f"\nTime: {human_time}")
-    # print(f"Unix: {ts}")
-    print(f"Unix: {human_time}")
+    print(f"\nTime: {ts}")
 
     base = "USD"
     quote = "EUR"
 
     print(f"\nQuerying {base} → {quote}")
 
-    # result = get_fx_rate(base, quote, ts)
-    result = get_fx_rate(base, quote, human_time)
+    result = get_fx_rate(base, quote, ts)
 
     print("\nResult:")
     print(result)

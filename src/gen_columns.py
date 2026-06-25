@@ -1,25 +1,10 @@
 import pandas as pd
 import argparse
 import os
+from utils_log import DataLogger
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Kraken FIFO rent calculator")
-
-    parser.add_argument(
-        "--input",
-        "-i",
-        required=True,
-        help="Input Kraken CSV file"
-    )
-
-    return parser.parse_args()
-
-
-def build_output_filename(input_file: str, pair: str) -> str:
-    base, ext = os.path.splitext(os.path.basename(input_file))
-    pair_clean = pair.replace("/", "_")
-    return f"{base}_{pair_clean}_rent{ext}"
+_dlog : DataLogger = DataLogger()
 
 
 def calculate_net_amount(row):
@@ -38,6 +23,8 @@ def gen_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Enriches asset-level dataset (NOT pair-level).
     """
+
+    _dlog.log_inf(f"Generating \'net_amount\' and \'real_unit_price\' columns")
 
     required = ["time", "pair", "type", "vol", "cost", "fee"]
 

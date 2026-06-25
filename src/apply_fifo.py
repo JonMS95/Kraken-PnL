@@ -15,6 +15,8 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
     unit_cost = 0.0
     asset = df["pair"].iloc[0].split("/")[0]
 
+    _dlog.log_inf(f"Computing FIFO: asset: {asset}, currency: {target_currency}")
+
     for _, row in df.iterrows():
         tx_type = row["type"].strip().lower()
         payment_currency = row['pair'].split('/')[1]

@@ -25,12 +25,12 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
         if tx_type == "buy":
             unit_cost = row["real_unit_price"]
             
-            _dlog.log_dbg(f"Buy op: vol: {row['vol']}, cur: {payment_currency}, date: {row['time']}")
+            _dlog.log_dbg(f"Buy op: asset: {asset}, vol: {row['vol']}, cur: {payment_currency}, net_amount: {row['net_amount']}, date: {row['time']}")
 
             if payment_currency != target_currency:
                 old_unit_cost: float = unit_cost
                 unit_cost *= get_fx_rate(payment_currency, target_currency, row["time"])
-                _dlog.log_dbg(f"Non-target currency-based payment op spotted: vol: {row['vol']}, unit_cost: {old_unit_cost} -> {unit_cost}")
+                _dlog.log_dbg(f"Non-target currency-based payment op spotted: unit_cost: {old_unit_cost} -> {unit_cost}")
 
             fifo.append({
                 "remaining_vol": row["vol"],
@@ -44,7 +44,7 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
             remaining = row["vol"]
             fifo_cost = 0.0
 
-            _dlog.log_dbg(f"Sell op: vol: {row['vol']}, cur: {payment_currency}, date: {row['time']}")
+            _dlog.log_dbg(f"Sell op: asset: {asset}, vol: {row['vol']}, cur: {payment_currency}, net_amount: {row['net_amount']}, date: {row['time']}")
 
             while remaining > 0:
 
@@ -68,7 +68,7 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
             if payment_currency != target_currency:
                 old_revenue: float = revenue
                 revenue *= get_fx_rate(payment_currency, target_currency, row["time"])
-                _dlog.log_dbg(f"Non-target currency-based payment op spotted: vol: {row['vol']}, unit_cost: {old_revenue} -> {revenue}")
+                _dlog.log_dbg(f"Non-target currency-based payment op spotted: unit_cost: {old_revenue} -> {revenue}")
 
             pnl = revenue - fifo_cost
 

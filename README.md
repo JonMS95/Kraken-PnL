@@ -36,9 +36,21 @@ Tool to compute Profit & Loss (PnL) from Kraken spot trades using FIFO accountin
 
 ---
 
+## Download & Install dependencies
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
 ## Usage
 
 Run the script via CLI:
 
 ```bash
 python3 src/main.py -i <input_csv> -o <output_csv> -a <asset> -c <currency> -y <year> -v
+```
+
+---

@@ -6,6 +6,7 @@ from extract_asset_data import clean_kraken_data
 from gen_columns import gen_data
 from apply_fifo import compute_fifo
 from utils_log import DataLogger
+from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL
 
 
 _dlog : DataLogger = DataLogger()
@@ -51,6 +52,13 @@ def parse_args():
         help="Input Kraken CSV file"
     )
 
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose (debug) logging"
+    )
+
     return parser.parse_args()
 
 
@@ -70,15 +78,21 @@ def get_asset_yearly_pnl(input_csv_path: str, asset: str, target_cur: str, year:
         utils_csv.write_df_to_csv(fifo_data_df, output_csv_path)
 
     pnl_asset_year: float = get_asset_yearly_pnl_from_df(fifo_data_df, int(year))
-
-    _dlog.log_inf(f"PnL for {asset} in {year} (as {target_cur}): {pnl_asset_year}")
     
     return pnl_asset_year
 
 
 def main() -> None:
     args = parse_args()
-    get_asset_yearly_pnl(args.input, args.asset, args.currency, args.year, args.output)
+    _dlog.set_log_level(DEBUG if args.verbose == True else INFO)
+    pnl_asset_year: float = 0.0
+
+    try:
+        pnl_asset_year = get_asset_yearly_pnl(args.input, args.asset, args.currency, args.year, args.output)
+    except Exception as ex:
+        _dlog.log_err(f"{ex}")
+    finally:
+        _dlog.log_inf(f"PnL for {args.asset} in {args.year} (as {args.currency}): {pnl_asset_year}")
 
 if __name__ == "__main__":
     main()

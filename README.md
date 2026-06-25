@@ -18,13 +18,21 @@ Tool to compute Profit & Loss (PnL) from Kraken spot trades using FIFO accountin
 ---
 
 ## Project Structure
- - src/
- - main.py: Entry point (CLI orchestration)
- - apply_fifo.py: FIFO accounting logic
- - extract_asset_data.py: Asset data retrieval
- - gen_columns.py: Feature engineering / enrichment
- - utils_csv.py: CSV <-> DataFrame utilities
- - utils_fx.py: FX rate retrieval (Kraken OHLC)
+
+```text
+.
+├── README.md: Current file
+├── requirements.txt: Project's main requirements (solely first order dependencies)
+├── .gitignore: Files to be ignored
+└── src
+    ├── apply_fifo.py: FIFO accounting logic
+    ├── extract_asset_data.py: Asset data retrieval
+    ├── gen_columns.py: Feature engineering / enrichment
+    ├── main.py: Entry point (CLI orchestration)
+    ├── utils_csv.py: CSV <-> DataFrame utilities
+    ├── utils_fx.py: FX rate retrieval (Kraken OHLC)
+    └── utils_log.py: Logging utilities
+```
 
 ---
 

@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def get_df_from_csv(input_file: str) -> pd.DataFrame:
     try:
         df: pd.DataFrame = pd.read_csv(input_file)

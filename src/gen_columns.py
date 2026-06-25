@@ -2,6 +2,7 @@ import pandas as pd
 import argparse
 import os
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Kraken FIFO rent calculator")
 
@@ -51,6 +52,5 @@ def gen_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # real unit price
     df["real_unit_price"] = df["net_amount"] / df["vol"]
-
 
     return df

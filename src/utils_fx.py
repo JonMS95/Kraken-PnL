@@ -7,8 +7,14 @@ from typing import Union
 # 1. Time conversion
 # ---------------------------------------------------------
 def human_to_unix(time_str: str) -> int:
-    dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S.%f")
-    return int(dt.timestamp())
+    for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+        try:
+            dt = datetime.strptime(time_str, fmt)
+            return int(dt.timestamp())
+        except ValueError:
+            pass
+
+    raise ValueError(f"Unrecognized datetime format: {time_str}")
 
 
 # ---------------------------------------------------------

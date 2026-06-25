@@ -44,6 +44,8 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
             remaining = row["vol"]
             fifo_cost = 0.0
 
+            _dlog.log_dbg(f"Sell op: vol: {row['vol']}, cur: {payment_currency}, date: {row['time']}")
+
             while remaining > 0:
 
                 if not fifo:
@@ -64,7 +66,9 @@ def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
             revenue = row["net_amount"]
             
             if payment_currency != target_currency:
+                old_revenue: float = revenue
                 revenue *= get_fx_rate(payment_currency, target_currency, row["time"])
+                _dlog.log_dbg(f"Non-target currency-based payment op spotted: vol: {row['vol']}, unit_cost: {old_revenue} -> {revenue}")
 
             pnl = revenue - fifo_cost
 

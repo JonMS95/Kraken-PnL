@@ -101,3 +101,6 @@ class DataLogger:
                 msg : Message to be logged.
         """
         self.__logger.critical(self._add_calling_fn_name(msg))
+
+    def set_log_level(self, log_level: int) -> None:
+        self.__logger.setLevel(log_level)

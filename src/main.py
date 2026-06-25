@@ -68,6 +68,13 @@ def get_asset_yearly_pnl_from_df(df: pd.DataFrame, year: int) -> float:
 
 
 def get_asset_yearly_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str) -> int:
+    _dlog.log_inf(f"Computing yearly PnL")
+    _dlog.log_inf(f"Input CSV: {input_csv_path}")
+    _dlog.log_inf(f"Asset: {asset}")
+    _dlog.log_inf(f"Currency: {target_cur}")
+    _dlog.log_inf(f"Year: {year}")
+    _dlog.log_inf(f"Output CSV: {output_csv_path or 'none'}")
+    
     raw_df: pd.DataFrame = utils_csv.get_df_from_csv(input_csv_path)
     
     clean_asset_df: pd.DataFrame    = clean_kraken_data(raw_df, asset)

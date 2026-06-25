@@ -1,32 +1,44 @@
 import pandas as pd
 from collections import deque
+from utils_fx import get_fx_rate
+from utils_log import DataLogger
 
-'''
-Add an additional input parameter here, such as target_currency (EUR).
-Also, do the following when "muhney" != target_currency: convert to target_currency using (mult by) get_fx_rate(muhney, target_currency, row_timestamp)
-If buying, then simply do it and add it. If selling, it's yet to be decided what to do although it does not affect our current trades.
-'''
-def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
+
+_dlog : DataLogger = DataLogger()
+
+
+def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
     fifo = deque()
     results = []
+    payment_currency = ""
+    unit_cost = 0.0
+    asset = df["pair"].iloc[0].split("/")[0]
 
     for _, row in df.iterrows():
-
         tx_type = row["type"].strip().lower()
-        print(f"row_num: {_}, asset: {row['pair'].split('/')[0]}, muhney: {row['pair'].split('/')[1]}")
-        continue
+        payment_currency = row['pair'].split('/')[1]
+        
         # BUY → add lot
         if tx_type == "buy":
+            unit_cost = row["real_unit_price"]
+            
+            _dlog.log_dbg(f"Buy op: vol: {row['vol']}, cur: {payment_currency}, date: {row['time']}")
+
+            if payment_currency != target_currency:
+                old_unit_cost: float = unit_cost
+                unit_cost *= get_fx_rate(payment_currency, target_currency, row["time"])
+                _dlog.log_dbg(f"Non-target currency-based payment op spotted: vol: {row['vol']}, unit_cost: {old_unit_cost} -> {unit_cost}")
+
             fifo.append({
                 "remaining_vol": row["vol"],
-                "unit_cost": row["real_unit_price"]
+                "unit_cost": unit_cost
             })
+            
             continue
 
         # SELL → consume FIFO
         if tx_type == "sell":
-
             remaining = row["vol"]
             fifo_cost = 0.0
 
@@ -48,11 +60,17 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
                     fifo.popleft()
 
             revenue = row["net_amount"]
+            
+            if payment_currency != target_currency:
+                revenue *= get_fx_rate(payment_currency, target_currency, row["time"])
+
             pnl = revenue - fifo_cost
 
             results.append({
                 "time": row["time"],
+                "asset": asset,
                 "sold_vol": row["vol"],
+                "base_currency": target_currency,
                 "revenue": revenue,
                 "fifo_cost": fifo_cost,
                 "pnl": pnl

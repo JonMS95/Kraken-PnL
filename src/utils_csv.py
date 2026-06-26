@@ -15,7 +15,5 @@ def get_df_from_csv(input_file: str) -> pd.DataFrame:
 def write_df_to_csv(df: pd.DataFrame, output_file: str) -> None:
     try:
         df.to_csv(output_file, index=False)
-        print(f"Clean CSV was properly generated: {output_file}")
-
     except Exception as e:
         raise RuntimeError(f"Error processing CSV file: {e}")

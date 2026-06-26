@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 
 def get_df_from_csv(input_file: str) -> pd.DataFrame:
@@ -14,6 +15,9 @@ def get_df_from_csv(input_file: str) -> pd.DataFrame:
 
 def write_df_to_csv(df: pd.DataFrame, output_file: str) -> None:
     try:
+        # Create conatiner directory in case it doesn't exist beforehand 
+        path = Path(output_file)
+        path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(output_file, index=False)
     except Exception as e:
         raise RuntimeError(f"Error processing CSV file: {e}")

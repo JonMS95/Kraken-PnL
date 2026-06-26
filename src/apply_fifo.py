@@ -7,7 +7,7 @@ from utils_log import DataLogger
 _dlog : DataLogger = DataLogger()
 
 
-def compute_fifo_pnl(df: pd.DataFrame) -> pd.DataFrame:
+def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
 
     # -------------------------------------------------
     # 0. Orden temporal (NO asumir input ordenado)
@@ -98,7 +98,7 @@ def compute_fifo_pnl(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(results)
 
 
-def compute_fifo(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
+def compute_fifo_trades(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
     fifo = deque()
     results = []

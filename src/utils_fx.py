@@ -1,6 +1,26 @@
 import requests
 from datetime import datetime
 from typing import Union
+import pandas as pd
+import time
+from pathlib import Path
+
+
+_fx_cache_df: pd.DataFrame = None
+
+
+# ---------------------------------------------------------
+# 0. Time conversion
+# ---------------------------------------------------------
+def init_fx_cache(path: str):
+    global _fx_cache_df
+
+    try:
+        _fx_cache_df = pd.read_csv(path)
+    except FileNotFoundError:
+        _fx_cache_df = pd.DataFrame(columns=[
+            "base", "quote", "timestamp", "fx"
+        ])
 
 
 # ---------------------------------------------------------
@@ -137,9 +157,22 @@ def normalize_timestamp(timestamp: Union[int, str]) -> int:
 
 
 # ---------------------------------------------------------
-# 7. MAIN FX function (THIS is what you wanted)
+# 7. MAIN FX function
 # ---------------------------------------------------------
 def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
+    timestamp = normalize_timestamp(timestamp)
+    
+    # Try to retrieve a match from fx cache first
+    match = _fx_cache_df[
+        (_fx_cache_df["base"] == base) &
+        (_fx_cache_df["quote"] == quote) &
+        (_fx_cache_df["timestamp"] == timestamp)
+    ]
+
+    # If a match was found, then return it immediately
+    if not match.empty:
+        return float(match.iloc[0]["fx"])
+    
     pairs_db = load_kraken_pairs()
 
     pair, inverted = resolve_pair(base, quote, pairs_db)
@@ -147,9 +180,20 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     if not pair:
         raise Exception(f"No valid Kraken pair for {base} → {quote}")
 
-    timestamp = normalize_timestamp(timestamp)
+    # trades = fetch_trades(pair, timestamp)
 
-    trades = fetch_trades(pair, timestamp)
+    retry_sleep_time = 2
+
+    while True:
+        try:
+            trades = fetch_trades(pair, timestamp)
+            break
+        except Exception as e:
+            if "Too many requests" in str(e):
+                time.sleep(retry_sleep_time)
+                retry_sleep_time *= 2 # Exponentially increment sleep time
+                continue
+            raise
 
     trade = find_trade(trades, timestamp)
 
@@ -170,11 +214,50 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     #     "timestamp": timestamp,
     #     "trade_timestamp": float(trade[2]),
     # }
+
+    append_fx_cache(base, quote, timestamp, price)
+
     return price
 
 
 # ---------------------------------------------------------
-# 8. MAIN TEST
+# 9. Add register to FX cache
+# ---------------------------------------------------------
+def append_fx_cache(base: str, quote: str, timestamp, fx: float):
+    global _fx_cache_df
+
+    new_row = {
+        "base": base,
+        "quote": quote,
+        "timestamp": timestamp,
+        "fx": fx
+    }
+
+    _fx_cache_df.loc[len(_fx_cache_df)] = new_row
+
+
+# ---------------------------------------------------------
+# 10. Save FX chache
+# ---------------------------------------------------------
+def save_fx_cache(path: str):
+    """
+    Persists the in-memory FX cache DataFrame to disk.
+    Overwrites the previous cache file.
+    """
+    global _fx_cache_df
+
+    if _fx_cache_df is None:
+        return
+
+    # Create conatiner directory in case it doesn't exist beforehand 
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    _fx_cache_df.to_csv(path, index=False)
+
+
+# ---------------------------------------------------------
+# 11. MAIN TEST
 # ---------------------------------------------------------
 def main():
     print("=== Kraken FX Engine ===")

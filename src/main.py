@@ -1,7 +1,7 @@
 import pandas as pd
 import argparse
 from utils_log import DataLogger
-from logging import INFO, DEBUG#, WARNING, ERROR, CRITICAL
+from logging import INFO, DEBUG
 from pnl import get_pnl
 
 
@@ -57,6 +57,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "-t",
+        "--trades",
+        action="store_true",
+        default=False,
+        help="Use trades file instead of ledger file (not recommended, always prefer ledger files)"
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -76,9 +84,10 @@ def main() -> None:
     _dlog.log_inf(f"Currency: {args.currency}")
     _dlog.log_inf(f"Output CSV: {args.output or 'none'}")
     _dlog.log_inf(f"Fx cache path: {args.fx_cache_path}")
+    _dlog.log_inf(f"Use trades file: {args.trades}")
 
     try:
-      pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path)
+        pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path, args.trades)
     except Exception as ex:
         _dlog.log_err(f"{ex}")
     finally:

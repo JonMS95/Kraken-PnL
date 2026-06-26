@@ -7,7 +7,36 @@ from utils_log import DataLogger
 _dlog : DataLogger = DataLogger()
 
 
-def clean_kraken_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+    """
+    Devuelve todas las filas del ledger relacionadas con un asset,
+    incluyendo todas las líneas que comparten refid con ese asset.
+    """
+
+    _dlog.log_inf(f"Extracting data for asset: {asset}")
+
+    df = df.copy()
+
+    # Ensure type
+    df["amount"] = pd.to_numeric(df["amount"])
+    df["fee"] = pd.to_numeric(df["fee"])
+
+    # Remove spare columns
+    df = df.drop(columns=["txid", "subtype", "aclass", "wallet", "balance"])
+
+    # Find refid's with target asset
+    refids = set(df[df["asset"] == asset]["refid"].dropna().unique())
+
+    # Bring all rows with same refid
+    related = df[df["refid"].isin(refids)].copy()
+
+    # Order by time
+    related = related.sort_values("time")
+
+    return related
+
+
+def clean_asset_data_from_trades(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     """
     Reads dataframe and generates a cleaned DataFrame filtered by base asset:
     time, pair, type, vol, cost, fee

@@ -1,4 +1,5 @@
 venv
-dat
+data
+cache
 .vscode
 __pycache__

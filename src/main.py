@@ -1,12 +1,8 @@
 import pandas as pd
 import argparse
-from pprint import pprint
-import utils_csv
-from extract_asset_data import clean_kraken_data
-from gen_columns import gen_data
-from apply_fifo import compute_fifo
 from utils_log import DataLogger
-from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL
+from logging import INFO, DEBUG
+from pnl import get_pnl
 
 
 _dlog : DataLogger = DataLogger()
@@ -53,6 +49,22 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--fx-cache-path",
+        "-f",
+        required=False,
+        default="cache/fx.csv",
+        help="Input Kraken CSV file"
+    )
+
+    parser.add_argument(
+        "-t",
+        "--trades",
+        action="store_true",
+        default=False,
+        help="Use trades file instead of ledger file (not recommended, always prefer ledger files)"
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -62,40 +74,20 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_asset_yearly_pnl_from_df(df: pd.DataFrame, year: int) -> float:
-    df["time"] = pd.to_datetime(df["time"])
-    return df.loc[df["time"].dt.year == year, "pnl"].sum()
-
-
-def get_asset_yearly_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str) -> int:
-    _dlog.log_inf(f"Computing yearly PnL")
-    _dlog.log_inf(f"Input CSV: {input_csv_path}")
-    _dlog.log_inf(f"Asset: {asset}")
-    _dlog.log_inf(f"Currency: {target_cur}")
-    _dlog.log_inf(f"Year: {year}")
-    _dlog.log_inf(f"Output CSV: {output_csv_path or 'none'}")
-    
-    raw_df: pd.DataFrame = utils_csv.get_df_from_csv(input_csv_path)
-    
-    clean_asset_df: pd.DataFrame    = clean_kraken_data(raw_df, asset)
-    asset_data_df: pd.DataFrame     = gen_data(clean_asset_df)
-    fifo_data_df: pd.DataFrame      = compute_fifo(asset_data_df, target_cur)
-    
-    if len(output_csv_path) > 0:
-        utils_csv.write_df_to_csv(fifo_data_df, output_csv_path)
-
-    pnl_asset_year: float = get_asset_yearly_pnl_from_df(fifo_data_df, int(year))
-    
-    return pnl_asset_year
-
-
 def main() -> None:
     args = parse_args()
     _dlog.set_log_level(DEBUG if args.verbose == True else INFO)
-    pnl_asset_year: float = 0.0
+
+    _dlog.log_inf(f"Input CSV: {args.input}")
+    _dlog.log_inf(f"Asset: {args.asset}")
+    _dlog.log_inf(f"Year: {args.year}")
+    _dlog.log_inf(f"Currency: {args.currency}")
+    _dlog.log_inf(f"Output CSV: {args.output or 'none'}")
+    _dlog.log_inf(f"Fx cache path: {args.fx_cache_path}")
+    _dlog.log_inf(f"Use trades file: {args.trades}")
 
     try:
-        pnl_asset_year = get_asset_yearly_pnl(args.input, args.asset, args.currency, args.year, args.output)
+        pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path, args.trades)
     except Exception as ex:
         _dlog.log_err(f"{ex}")
     finally:

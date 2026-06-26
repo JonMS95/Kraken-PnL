@@ -2,7 +2,7 @@ import pandas as pd
 import argparse
 import os
 from utils_log import DataLogger
-from utils_fx import get_fx_rate
+from utils_fx import init_fx_cache, get_fx_rate, save_fx_cache
 
 
 _dlog : DataLogger = DataLogger()
@@ -145,6 +145,16 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def gen_data(df: pd.DataFrame, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
+    df = gen_clean_events(df)
+    
+    init_fx_cache(fx_cache_path)
+    df = add_fx_conversion(df, target_cur)
+    save_fx_cache(fx_cache_path)
+
+    return df
+
+
 def calculate_net_amount(row):
     tx_type = row["type"].strip().lower()
 
@@ -157,7 +167,7 @@ def calculate_net_amount(row):
     raise ValueError(f"Unsupported type: {row['type']}")
 
 
-def gen_data(df: pd.DataFrame) -> pd.DataFrame:
+def gen_data_from_trades(df: pd.DataFrame) -> pd.DataFrame:
     """
     Enriches asset-level dataset (NOT pair-level).
     """

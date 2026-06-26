@@ -79,34 +79,25 @@ def get_asset_yearly_pnl(input_csv_path: str, asset: str, target_cur: str, year:
     _dlog.log_inf(f"Computing yearly PnL")
     _dlog.log_inf(f"Input CSV: {input_csv_path}")
     _dlog.log_inf(f"Asset: {asset}")
-    _dlog.log_inf(f"Currency: {target_cur}")
     _dlog.log_inf(f"Year: {year}")
+    _dlog.log_inf(f"Currency: {target_cur}")
     _dlog.log_inf(f"Output CSV: {output_csv_path or 'none'}")
     _dlog.log_inf(f"Fx cache path: {fx_cache_path}")
     
-    raw_df: pd.DataFrame = get_df_from_csv(input_csv_path)
-    # print(sorted(raw_df["type"].unique()))
+    df: pd.DataFrame = get_df_from_csv(input_csv_path)
+    df = extract_asset_events(df, asset)    
+    df = gen_clean_events(df)
     
-    asset_df: pd.DataFrame = extract_asset_events(raw_df, asset)
-    # utils_csv.write_df_to_csv(asset_df, "asset.csv")
-    
-    clean_df: pd.DataFrame = gen_clean_events(asset_df)
-    # utils_csv.write_df_to_csv(clean_df, "clean.csv")
-
     init_fx_cache(fx_cache_path)
- 
-    converted_df: pd.DataFrame = add_fx_conversion(clean_df, target_cur)
-    # utils_csv.write_df_to_csv(converted_df, "converted.csv")
-
+    df = add_fx_conversion(df, target_cur)
     save_fx_cache(fx_cache_path)
-
-    fifo_df: pd.dataFrame = compute_fifo_pnl(converted_df)
-    # utils_csv.write_df_to_csv(fifo_df, "pnl.csv")
-
+    
+    df = compute_fifo_pnl(df)
+    
     if len(output_csv_path) > 0:
-        write_df_to_csv(fifo_df, output_csv_path)
+        write_df_to_csv(df, output_csv_path)
 
-    return get_asset_yearly_pnl_from_df(fifo_df, int(year))
+    return get_asset_yearly_pnl_from_df(df, int(year))
 
 
 def main() -> None:

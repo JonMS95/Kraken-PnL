@@ -1,6 +1,6 @@
 import pandas as pd
 from collections import deque
-from utils_fx import get_fx_rate
+from utils_fx import init_fx_cache, get_fx_rate, save_fx_cache
 from utils_log import DataLogger
 
 
@@ -98,13 +98,15 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(results)
 
 
-def compute_fifo_trades(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
+def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_path: str) -> pd.DataFrame:
 
     fifo = deque()
     results = []
     payment_currency = ""
     unit_cost = 0.0
     asset = df["pair"].iloc[0].split("/")[0]
+
+    init_fx_cache(fx_cache_path)
 
     _dlog.log_inf(f"Computing FIFO: asset: {asset}, currency: {target_currency}")
 
@@ -176,5 +178,7 @@ def compute_fifo_trades(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
             continue
 
         raise ValueError(f"Unsupported type: {row['type']}")
+    
+    save_fx_cache(fx_cache_path)
 
     return pd.DataFrame(results)

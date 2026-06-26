@@ -7,7 +7,7 @@ from utils_log import DataLogger
 _dlog : DataLogger = DataLogger()
 
 
-def extract_asset_events(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     """
     Devuelve todas las filas del ledger relacionadas con un asset,
     incluyendo todas las líneas que comparten refid con ese asset.
@@ -36,7 +36,7 @@ def extract_asset_events(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     return related
 
 
-def clean_kraken_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+def clean_asset_data_from_trades(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     """
     Reads dataframe and generates a cleaned DataFrame filtered by base asset:
     time, pair, type, vol, cost, fee

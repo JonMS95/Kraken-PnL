@@ -1,5 +1,5 @@
 import logging
-from inspect import stack
+from inspect import stack 
 
 class DataLogger:
     """
@@ -14,7 +14,7 @@ class DataLogger:
             Instance of a Python logger used for recording debug and info messages.
     """
     
-    __log_format    : str               = "%(asctime)s - %(filename)s - %(levelname)s - %(message)s"
+    __log_format    : str               = "%(asctime)s - %(filename)s:%(lineno)d - %(funcName)s - %(levelname)s - %(message)s"
     __logger        : logging.Logger    = None
     __log_caller_fn : bool              = None
 
@@ -40,19 +40,6 @@ class DataLogger:
         self.__log_caller_fn = log_caller_fn
 
 
-    def _add_calling_fn_name(self, msg: str) -> str:
-        """
-            Adds caller function's name (if required).
-            
-            Args:
-                msg : Message to be logged.
-            
-            Returns:
-                Processed message.
-        """
-        return ('(' + stack()[2].function + ") " + msg) if self.__log_caller_fn else msg
-
-
     def log_dbg(self, msg: str = "") -> None:
         """
             Logs debug message.
@@ -60,7 +47,7 @@ class DataLogger:
             Args:
                 msg : Message to be logged.
         """
-        self.__logger.debug(self._add_calling_fn_name(msg))
+        self.__logger.debug(msg, stacklevel=2)
     
 
     def log_inf(self, msg: str = "") -> None:
@@ -70,7 +57,7 @@ class DataLogger:
             Args:
                 msg : Message to be logged.
         """
-        self.__logger.info(self._add_calling_fn_name(msg))
+        self.__logger.info(msg, stacklevel=2)
     
 
     def log_wng(self, msg: str = "") -> None:
@@ -80,7 +67,7 @@ class DataLogger:
             Args:
                 msg : Message to be logged.
         """
-        self.__logger.warning(self._add_calling_fn_name(msg))
+        self.__logger.warning(msg, stacklevel=2)
     
 
     def log_err(self, msg: str = "") -> None:
@@ -90,7 +77,7 @@ class DataLogger:
             Args:
                 msg : Message to be logged.
         """
-        self.__logger.error(self._add_calling_fn_name(msg))
+        self.__logger.error(msg, stacklevel=2)
     
     
     def log_crt(self, msg: str = "") -> None:
@@ -100,7 +87,8 @@ class DataLogger:
             Args:
                 msg : Message to be logged.
         """
-        self.__logger.critical(self._add_calling_fn_name(msg))
+        self.__logger.critical(msg, stacklevel=2)
+
 
     def set_log_level(self, log_level: int) -> None:
         self.__logger.setLevel(log_level)

@@ -1,12 +1,8 @@
 import pandas as pd
 import argparse
-from utils_csv import get_df_from_csv, write_df_to_csv
 from utils_log import DataLogger
-from utils_fx import init_fx_cache, save_fx_cache
-from extract_asset_data import extract_asset_events, clean_kraken_data
-from gen_columns import gen_clean_events, add_fx_conversion, gen_data
-from apply_fifo import compute_fifo_pnl, compute_fifo
 from logging import INFO, DEBUG#, WARNING, ERROR, CRITICAL
+from pnl import get_pnl
 
 
 _dlog : DataLogger = DataLogger()
@@ -70,42 +66,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_asset_yearly_pnl_from_df(df: pd.DataFrame, year: int) -> float:
-    df["time"] = pd.to_datetime(df["time"])
-    return df.loc[df["time"].dt.year == year, "pnl"].sum()
-
-
-def get_asset_yearly_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str, fx_cache_path: str) -> int:
-    _dlog.log_inf(f"Computing yearly PnL")
-    _dlog.log_inf(f"Input CSV: {input_csv_path}")
-    _dlog.log_inf(f"Asset: {asset}")
-    _dlog.log_inf(f"Year: {year}")
-    _dlog.log_inf(f"Currency: {target_cur}")
-    _dlog.log_inf(f"Output CSV: {output_csv_path or 'none'}")
-    _dlog.log_inf(f"Fx cache path: {fx_cache_path}")
-    
-    df: pd.DataFrame = get_df_from_csv(input_csv_path)
-    df = extract_asset_events(df, asset)    
-    df = gen_clean_events(df)
-    
-    init_fx_cache(fx_cache_path)
-    df = add_fx_conversion(df, target_cur)
-    save_fx_cache(fx_cache_path)
-    
-    df = compute_fifo_pnl(df)
-    
-    if len(output_csv_path) > 0:
-        write_df_to_csv(df, output_csv_path)
-
-    return get_asset_yearly_pnl_from_df(df, int(year))
-
-
 def main() -> None:
     args = parse_args()
     _dlog.set_log_level(DEBUG if args.verbose == True else INFO)
 
+    _dlog.log_inf(f"Input CSV: {args.input}")
+    _dlog.log_inf(f"Asset: {args.asset}")
+    _dlog.log_inf(f"Year: {args.year}")
+    _dlog.log_inf(f"Currency: {args.currency}")
+    _dlog.log_inf(f"Output CSV: {args.output or 'none'}")
+    _dlog.log_inf(f"Fx cache path: {args.fx_cache_path}")
+
     try:
-      pnl_asset_year = get_asset_yearly_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path)
+      pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path)
     except Exception as ex:
         _dlog.log_err(f"{ex}")
     finally:

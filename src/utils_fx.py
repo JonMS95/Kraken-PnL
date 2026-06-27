@@ -205,16 +205,6 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     if inverted:
         price = 1 / price
 
-    # return {
-    #     "base": base,
-    #     "quote": quote,
-    #     "pair_used": pair,
-    #     "inverted": inverted,
-    #     "price": price,
-    #     "timestamp": timestamp,
-    #     "trade_timestamp": float(trade[2]),
-    # }
-
     append_fx_cache(base, quote, unix_time, price)
 
     _dlog.log_dbg(f"Added FX: base: {base}, quote: {quote}, time: {timestamp}, price: {price}")

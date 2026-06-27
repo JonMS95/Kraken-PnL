@@ -13,7 +13,7 @@ def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     incluyendo todas las líneas que comparten refid con ese asset.
     """
 
-    _dlog.log_inf(f"Extracting data for asset: {asset}")
+    _dlog.log_dbg(f"Extracting data for asset: {asset}")
 
     df = df.copy()
 

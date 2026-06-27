@@ -91,7 +91,7 @@ def main() -> None:
     except Exception as ex:
         _dlog.log_err(f"{ex}")
     finally:
-        _dlog.log_inf(f"PnL for {args.asset} in {args.year} (as {args.currency}): {pnl_asset_year}")
+        _dlog.log_inf(f"PnL for {args.asset} in {args.year} (as {args.currency}): {pnl_asset_year: .2f}")
 
 if __name__ == "__main__":
     main()

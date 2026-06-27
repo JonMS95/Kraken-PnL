@@ -2,13 +2,15 @@ import pandas as pd
 import argparse
 import os
 from utils_log import DataLogger
-from utils_fx import init_fx_cache, get_fx_rate, save_fx_cache
+from utils_fx import get_fx_rate
 
 
 _dlog : DataLogger = DataLogger()
 
 
 def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
+
+    _dlog.log_dbg("Generating clean events")
 
     rows = []
     processed = set()
@@ -18,14 +20,17 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
         refid = row["refid"]
         t = row["type"]
 
+        if t == "staking" or t == "earn":
+            t = "income"
+
         # -------------------------------------------------
-        # 1. WITHDRAWAL
+        # 1. WITHDRAWAL OR STAKING / EARN
         # -------------------------------------------------
-        if t == "withdrawal":
+        if t in {"withdrawal", "income"}:
             rows.append({
                 "refid": refid,
                 "time": row["time"],
-                "type": "withdrawal",
+                "type": t,
                 "asset": row["asset"],
                 "vol": abs(row["amount"]),
                 "currency": "",
@@ -34,22 +39,7 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         # -------------------------------------------------
-        # 2. STAKING / EARN
-        # -------------------------------------------------
-        if t in {"staking", "earn"}:
-            rows.append({
-                "refid": refid,
-                "time": row["time"],
-                "type": "income",
-                "asset": row["asset"],
-                "vol": abs(row["amount"]),
-                "currency": "",
-                "net_amount": None
-            })
-            continue
-
-        # -------------------------------------------------
-        # 3. TRADE (consolidado por refid)
+        # 2. TRADE (consolidado por refid)
         # -------------------------------------------------
         if t == "trade":
 
@@ -91,6 +81,12 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
             })
 
             processed.add(refid)
+        
+        # -------------------------------------------------
+        # 3. OTHER (not treated by now)
+        # -------------------------------------------------
+        else:
+            _dlog.log_wng(f"Other type op spotted: {t}")
 
     ret: pd.DataFrame = pd.DataFrame(rows)
     ret = ret.drop(columns=["refid"])
@@ -99,6 +95,8 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
+
+    _dlog.log_dbg(f"Generating FX conversions to target currency: {target_currency}")
 
     rows = []
 
@@ -125,18 +123,17 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
                 new_row["net_amount"] = net_amount
 
         # -------------------------------------------------
-        # 2. STAKING / EARN
+        # 2. STAKING / EARN or WITHDRAWAL
         # -------------------------------------------------
-        elif t == "income":
+        elif t == "income" or t == "withdrawal":
             fx = get_fx_rate(asset, target_currency, time)
-            print(f"asset: {asset}, target_currency: {target_currency}, fx: {fx}")
             new_row["net_amount"] = vol * fx
-
+        
         # -------------------------------------------------
-        # 3. WITHDRAWAL
+        # 3. 3. OTHER (not treated by now
         # -------------------------------------------------
-        elif t == "withdrawal":
-            pass  # no changes
+        else:
+            _dlog.log_wng(f"Other type op spotted: {t}")
 
         new_row["real_unit_value"] = new_row["net_amount"] / new_row["vol"]
 
@@ -146,11 +143,9 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
 
 def gen_data(df: pd.DataFrame, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
+    _dlog.log_dbg(f"Generating data in currency: {target_cur}")
     df = gen_clean_events(df)
-    
-    init_fx_cache(fx_cache_path)
     df = add_fx_conversion(df, target_cur)
-    save_fx_cache(fx_cache_path)
 
     return df
 

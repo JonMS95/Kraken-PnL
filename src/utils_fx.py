@@ -4,9 +4,15 @@ from typing import Union
 import pandas as pd
 import time
 from pathlib import Path
+from utils_log import DataLogger
 
 
 _fx_cache_df: pd.DataFrame = None
+_dlog : DataLogger = DataLogger()
+_asset_normalizer: dict[str, str] = {
+    "BTC"   : "XBT",
+    "DOGE"  : "XDG",
+}
 
 
 # ---------------------------------------------------------
@@ -160,13 +166,22 @@ def normalize_timestamp(timestamp: Union[int, str]) -> int:
 # 7. MAIN FX function
 # ---------------------------------------------------------
 def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
-    timestamp = normalize_timestamp(timestamp)
+    unix_time: int = normalize_timestamp(timestamp)
     
+    query_base: str = base
+    query_quote: str = quote
+
+    if base in _asset_normalizer.keys():
+        query_base = _asset_normalizer[base]
+    
+    if quote in _asset_normalizer.keys():
+        query_quote = _asset_normalizer[quote]
+
     # Try to retrieve a match from fx cache first
     match = _fx_cache_df[
-        (_fx_cache_df["base"] == base) &
-        (_fx_cache_df["quote"] == quote) &
-        (_fx_cache_df["timestamp"] == timestamp)
+        (_fx_cache_df["base"] == query_base) &
+        (_fx_cache_df["quote"] == query_quote) &
+        (_fx_cache_df["timestamp"] == unix_time)
     ]
 
     # If a match was found, then return it immediately
@@ -175,18 +190,16 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     
     pairs_db = load_kraken_pairs()
 
-    pair, inverted = resolve_pair(base, quote, pairs_db)
+    pair, inverted = resolve_pair(query_base, query_quote, pairs_db)
 
     if not pair:
         raise Exception(f"No valid Kraken pair for {base} → {quote}")
-
-    # trades = fetch_trades(pair, timestamp)
 
     retry_sleep_time = 2
 
     while True:
         try:
-            trades = fetch_trades(pair, timestamp)
+            trades = fetch_trades(pair, unix_time)
             break
         except Exception as e:
             if "Too many requests" in str(e):
@@ -195,7 +208,7 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
                 continue
             raise
 
-    trade = find_trade(trades, timestamp)
+    trade = find_trade(trades, unix_time)
 
     if not trade:
         return None
@@ -205,17 +218,9 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     if inverted:
         price = 1 / price
 
-    # return {
-    #     "base": base,
-    #     "quote": quote,
-    #     "pair_used": pair,
-    #     "inverted": inverted,
-    #     "price": price,
-    #     "timestamp": timestamp,
-    #     "trade_timestamp": float(trade[2]),
-    # }
+    append_fx_cache(base, quote, unix_time, price)
 
-    append_fx_cache(base, quote, timestamp, price)
+    _dlog.log_dbg(f"Added FX: base: {base}, quote: {quote}, time: {timestamp}, price: {price}")
 
     return price
 
@@ -257,7 +262,7 @@ def save_fx_cache(path: str):
 
 
 # ---------------------------------------------------------
-# 11. MAIN TEST
+# 12. MAIN TEST
 # ---------------------------------------------------------
 def main():
     print("=== Kraken FX Engine ===")
@@ -271,7 +276,11 @@ def main():
 
     print(f"\nQuerying {base} → {quote}")
 
+    fx_cache_path: str = "cache/test_utils_fx.csv"
+
+    init_fx_cache(fx_cache_path)
     result = get_fx_rate(base, quote, ts)
+    save_fx_cache(fx_cache_path)
 
     print("\nResult:")
     print(result)

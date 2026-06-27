@@ -1,6 +1,6 @@
 import pandas as pd
 from collections import deque
-from utils_fx import init_fx_cache, get_fx_rate, save_fx_cache
+from utils_fx import get_fx_rate
 from utils_log import DataLogger
 
 
@@ -9,13 +9,15 @@ _dlog : DataLogger = DataLogger()
 
 def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
 
+    _dlog.log_dbg("Computing FIFO")
+
     # -------------------------------------------------
     # 0. Orden temporal (NO asumir input ordenado)
     # -------------------------------------------------
     df = df.sort_values("time").reset_index(drop=True)
 
     # -------------------------------------------------
-    # 1. Validación de asset único
+    # 1. Validate unique asset
     # -------------------------------------------------
     assets = df["asset"].unique()
     if len(assets) != 1:
@@ -31,16 +33,18 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     results = []
 
     # -------------------------------------------------
-    # 3. Iteración principal
+    # 3. Principal iteration
     # -------------------------------------------------
     for _, row in df.iterrows():
 
         t = row["type"]
 
+        _dlog.log_dbg(f"Adding {t} op: asset : {asset}, volume: {row['vol']}, currency: {row['currency']}, real unit value: {row['real_unit_value']}")
+
         # =================================================
-        # BUY → añade lote a FIFO
+        # BUY or INCOME → add lot to FIFO
         # =================================================
-        if t == "buy":
+        if t == "buy" or t == "income":
 
             fifo.append({
                 "remaining_vol": row["vol"],
@@ -83,6 +87,7 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
                 "time": row["time"],
                 "asset": asset,
                 "vol": row["vol"],
+                "currency": row["currency"],
                 "revenue": revenue,
                 "fifo_cost": fifo_cost,
                 "pnl": pnl
@@ -91,8 +96,15 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         # =================================================
-        # otros tipos (por ahora ignorados)
+        # WITHDRAWAL → not treated by now
         # =================================================
+        if t == "withdrawal":
+            pass
+
+        # =================================================
+        # Other operation types (ignored by now)
+        # =================================================
+        _dlog.log_wng(f"Other type op spotted: {t}")
         continue
 
     return pd.DataFrame(results)
@@ -105,8 +117,6 @@ def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_pa
     payment_currency = ""
     unit_cost = 0.0
     asset = df["pair"].iloc[0].split("/")[0]
-
-    init_fx_cache(fx_cache_path)
 
     _dlog.log_inf(f"Computing FIFO: asset: {asset}, currency: {target_currency}")
 
@@ -178,7 +188,5 @@ def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_pa
             continue
 
         raise ValueError(f"Unsupported type: {row['type']}")
-    
-    save_fx_cache(fx_cache_path)
 
     return pd.DataFrame(results)

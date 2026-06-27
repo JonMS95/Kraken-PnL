@@ -1,6 +1,7 @@
 import pandas as pd
 from utils_log import DataLogger
 from utils_csv import get_df_from_csv, write_df_to_csv
+from utils_fx import init_fx_cache, save_fx_cache
 from extract_asset_data import clean_asset_data, clean_asset_data_from_trades
 from gen_columns import gen_data, gen_data_from_trades
 from apply_fifo import compute_fifo, compute_fifo_from_trades
@@ -32,7 +33,9 @@ def get_pnl_df_from_trades(df: pd.DataFrame, asset: str, target_cur: str, fx_cac
 
 def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str, fx_cache_path: str, use_trades: bool) -> int:
     _dlog.log_dbg(f"Computing PnL")
-    
+
+    init_fx_cache(fx_cache_path)
+
     df: pd.DataFrame = get_df_from_csv(input_csv_path)
 
     if use_trades:
@@ -43,4 +46,6 @@ def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_
     if len(output_csv_path) > 0:
         write_df_to_csv(df, output_csv_path)
     
+    save_fx_cache(fx_cache_path)
+
     return calc_pnl_from_df(df, int(year))

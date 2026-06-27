@@ -24,11 +24,15 @@ def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     # Remove spare columns
     df = df.drop(columns=["txid", "subtype", "aclass", "wallet", "balance"])
 
-    # Find refid's with target asset
-    refids = set(df[df["asset"] == asset]["refid"].dropna().unique())
+    # Find refid's with target asset (including staking asset)
+    staking_asset: str = f"{asset}.S"
+    refids = set(df[df["asset"].isin([asset, staking_asset])]["refid"].dropna().unique())
 
     # Bring all rows with same refid
     related = df[df["refid"].isin(refids)].copy()
+
+    # Replace all staking asset tickers by the original asset's
+    related["asset"] = related["asset"].replace(staking_asset, asset)
 
     # Order by time
     related = related.sort_values("time")

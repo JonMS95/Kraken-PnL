@@ -29,8 +29,8 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     # 2. FIFO structure
     # -------------------------------------------------
     fifo = deque()
-
     results = []
+    balance: float = 0.0
 
     # -------------------------------------------------
     # 3. Principal iteration
@@ -38,8 +38,6 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     for _, row in df.iterrows():
 
         t = row["type"]
-
-        _dlog.log_dbg(f"Adding {t} op: asset : {asset}, volume: {row['vol']}, currency: {row['currency']}, real unit value: {row['real_unit_value']}")
 
         # =================================================
         # BUY or INCOME → add lot to FIFO
@@ -51,12 +49,12 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
                 "unit_cost": row["real_unit_value"]
             })
 
-            continue
+            balance += row["vol"]
 
         # =================================================
         # SELL → consume FIFO
         # =================================================
-        if t == "sell":
+        elif t == "sell":
 
             sell_vol = row["vol"]
             fifo_cost = 0.0
@@ -92,20 +90,22 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
                 "fifo_cost": fifo_cost,
                 "pnl": pnl
             })
-
-            continue
+            
+            balance -= row["vol"]
 
         # =================================================
         # WITHDRAWAL → not treated by now
         # =================================================
-        if t == "withdrawal":
-            pass
+        elif t == "withdrawal":
+            balance -= row["vol"]
 
         # =================================================
         # Other operation types (ignored by now)
         # =================================================
-        _dlog.log_wng(f"Other type op spotted: {t}")
-        continue
+        else:
+            _dlog.log_wng(f"Other type op spotted: {t}")
+        
+        _dlog.log_dbg(f"Adding {t} op: asset : {asset}, volume: {row['vol']}, balance: {balance}, currency: {row['currency']}, real unit value: {row['real_unit_value']}")
 
     return pd.DataFrame(results)
 

@@ -4,9 +4,11 @@ from typing import Union
 import pandas as pd
 import time
 from pathlib import Path
+from utils_log import DataLogger
 
 
 _fx_cache_df: pd.DataFrame = None
+_dlog : DataLogger = DataLogger()
 
 
 # ---------------------------------------------------------
@@ -160,13 +162,13 @@ def normalize_timestamp(timestamp: Union[int, str]) -> int:
 # 7. MAIN FX function
 # ---------------------------------------------------------
 def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
-    timestamp = normalize_timestamp(timestamp)
+    unix_time: int = normalize_timestamp(timestamp)
     
     # Try to retrieve a match from fx cache first
     match = _fx_cache_df[
         (_fx_cache_df["base"] == base) &
         (_fx_cache_df["quote"] == quote) &
-        (_fx_cache_df["timestamp"] == timestamp)
+        (_fx_cache_df["timestamp"] == unix_time)
     ]
 
     # If a match was found, then return it immediately
@@ -180,13 +182,11 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     if not pair:
         raise Exception(f"No valid Kraken pair for {base} → {quote}")
 
-    # trades = fetch_trades(pair, timestamp)
-
     retry_sleep_time = 2
 
     while True:
         try:
-            trades = fetch_trades(pair, timestamp)
+            trades = fetch_trades(pair, unix_time)
             break
         except Exception as e:
             if "Too many requests" in str(e):
@@ -195,7 +195,7 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
                 continue
             raise
 
-    trade = find_trade(trades, timestamp)
+    trade = find_trade(trades, unix_time)
 
     if not trade:
         return None
@@ -215,7 +215,9 @@ def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
     #     "trade_timestamp": float(trade[2]),
     # }
 
-    append_fx_cache(base, quote, timestamp, price)
+    append_fx_cache(base, quote, unix_time, price)
+
+    _dlog.log_dbg(f"Added FX: base: {base}, quote: {quote}, time: {timestamp}, price: {price}")
 
     return price
 

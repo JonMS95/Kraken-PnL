@@ -1,6 +1,6 @@
 import pandas as pd
 from collections import deque
-from utils_fx import init_fx_cache, get_fx_rate, save_fx_cache
+from utils_fx import get_fx_rate
 from utils_log import DataLogger
 
 
@@ -96,7 +96,13 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         # =================================================
-        # otros tipos (por ahora ignorados)
+        # WITHDRAWAL → not treated by now
+        # =================================================
+        if t == "withdrawal":
+            pass
+
+        # =================================================
+        # Other operation types (ignored by now)
         # =================================================
         _dlog.log_wng(f"Other type op spotted: {t}")
         continue
@@ -111,8 +117,6 @@ def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_pa
     payment_currency = ""
     unit_cost = 0.0
     asset = df["pair"].iloc[0].split("/")[0]
-
-    init_fx_cache(fx_cache_path)
 
     _dlog.log_inf(f"Computing FIFO: asset: {asset}, currency: {target_currency}")
 
@@ -184,7 +188,5 @@ def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_pa
             continue
 
         raise ValueError(f"Unsupported type: {row['type']}")
-    
-    save_fx_cache(fx_cache_path)
 
     return pd.DataFrame(results)

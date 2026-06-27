@@ -9,13 +9,15 @@ _dlog : DataLogger = DataLogger()
 
 def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
 
+    _dlog.log_dbg("Computing FIFO")
+
     # -------------------------------------------------
     # 0. Orden temporal (NO asumir input ordenado)
     # -------------------------------------------------
     df = df.sort_values("time").reset_index(drop=True)
 
     # -------------------------------------------------
-    # 1. Validación de asset único
+    # 1. Validate unique asset
     # -------------------------------------------------
     assets = df["asset"].unique()
     if len(assets) != 1:
@@ -31,16 +33,18 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     results = []
 
     # -------------------------------------------------
-    # 3. Iteración principal
+    # 3. Principal iteration
     # -------------------------------------------------
     for _, row in df.iterrows():
 
         t = row["type"]
 
+        _dlog.log_dbg(f"Adding {t} op: asset : {asset}, volume: {row['vol']}, currency: {row['currency']}, real unit value: {row['real_unit_value']}")
+
         # =================================================
-        # BUY → añade lote a FIFO
+        # BUY or INCOME → add lot to FIFO
         # =================================================
-        if t == "buy":
+        if t == "buy" or t == "income":
 
             fifo.append({
                 "remaining_vol": row["vol"],
@@ -83,6 +87,7 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
                 "time": row["time"],
                 "asset": asset,
                 "vol": row["vol"],
+                "currency": row["currency"],
                 "revenue": revenue,
                 "fifo_cost": fifo_cost,
                 "pnl": pnl
@@ -93,6 +98,7 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
         # =================================================
         # otros tipos (por ahora ignorados)
         # =================================================
+        _dlog.log_wng(f"Other type op spotted: {t}")
         continue
 
     return pd.DataFrame(results)

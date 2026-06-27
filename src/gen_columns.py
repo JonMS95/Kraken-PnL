@@ -129,7 +129,6 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
         # -------------------------------------------------
         elif t == "income":
             fx = get_fx_rate(asset, target_currency, time)
-            print(f"asset: {asset}, target_currency: {target_currency}, fx: {fx}")
             new_row["net_amount"] = vol * fx
 
         # -------------------------------------------------

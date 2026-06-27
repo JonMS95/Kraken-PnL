@@ -10,6 +10,8 @@ _dlog : DataLogger = DataLogger()
 
 def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
 
+    _dlog.log_dbg("Generating clean events")
+
     rows = []
     processed = set()
 
@@ -100,6 +102,8 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
+    _dlog.log_dbg(f"Generating FX conversions to target currency: {target_currency}")
+
     rows = []
 
     for _, row in df.iterrows():
@@ -145,6 +149,7 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
 
 def gen_data(df: pd.DataFrame, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
+    _dlog.log_dbg(f"Generating data in currency: {target_cur}")
     df = gen_clean_events(df)
     
     init_fx_cache(fx_cache_path)

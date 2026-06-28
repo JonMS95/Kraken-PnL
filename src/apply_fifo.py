@@ -105,7 +105,7 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
         else:
             _dlog.log_wng(f"Other type op spotted: {t}")
         
-        _dlog.log_dbg(f"Adding {t} op: asset : {asset}, volume: {row['vol']}, balance: {balance}, currency: {row['currency']}, real unit value: {row['real_unit_value']}")
+        _dlog.log_dbg(f"Adding {t} op: time: {row['time']}, asset : {asset}, volume: {row['vol']: .4f}, balance: {balance: .4f}, currency: {row['currency']}, real unit value: {row['real_unit_value']: .2f}")
 
     return pd.DataFrame(results)
 

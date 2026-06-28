@@ -65,10 +65,12 @@ def clean_asset_data(df: pd.DataFrame, asset: str, target_year: int) -> pd.DataF
     return related
 
 
-def clean_asset_data_from_trades(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+def clean_asset_data_from_trades(df: pd.DataFrame, asset: str, target_year: int) -> pd.DataFrame:
     """
     Reads dataframe and generates a cleaned DataFrame filtered by base asset:
     time, pair, type, vol, cost, fee
+
+    Also, removes rows with a year greater than provided.
 
     Example:
         asset = "BTC"
@@ -91,6 +93,10 @@ def clean_asset_data_from_trades(df: pd.DataFrame, asset: str) -> pd.DataFrame:
 
     # Keep only required columns
     df = df[required_cols]
+
+    # Preserve only the rows for which year within time value is lower or equal than expected
+    df["time"] = pd.to_datetime(df["time"])
+    df = df[df["time"].dt.year <= target_year]
 
     # Order by time (FIFO consistency)
     df = df.sort_values(by="time")

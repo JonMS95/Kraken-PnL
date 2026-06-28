@@ -147,12 +147,16 @@ def find_trade(trades, timestamp):
 # ---------------------------------------------------------
 # 6. Get timestamp from either integer or string
 # ---------------------------------------------------------
-def normalize_timestamp(timestamp: Union[int, str]) -> int:
+def normalize_timestamp(timestamp: Union[int, str, pd.Timestamp]) -> int:
     """
     Accepts:
     - int → returns as-is
     - str → converts to unix timestamp
+    - pd.Timestamp → converts first to string, then treats as str
     """
+    if isinstance(timestamp, pd.Timestamp):
+        timestamp = str(timestamp)
+    
     if isinstance(timestamp, int):
         return timestamp
 
@@ -165,7 +169,7 @@ def normalize_timestamp(timestamp: Union[int, str]) -> int:
 # ---------------------------------------------------------
 # 7. MAIN FX function
 # ---------------------------------------------------------
-def get_fx_rate(base: str, quote: str, timestamp: Union[int, str]) -> float:
+def get_fx_rate(base: str, quote: str, timestamp: Union[int, str, pd.Timestamp]) -> float:
     unix_time: int = normalize_timestamp(timestamp)
     
     query_base: str = base

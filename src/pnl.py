@@ -15,23 +15,43 @@ def calc_pnl_from_df(df: pd.DataFrame, year: int) -> float:
     return df.loc[df["time"].dt.year == year, "pnl"].sum()
 
 
-def get_pnl_df(df: pd.DataFrame, asset: str, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
-    df = clean_asset_data(df, asset)
+def get_pnl_df(df: pd.DataFrame, asset: str, target_cur: str, target_year: int, fx_cache_path: str, debug_dir: str) -> pd.DataFrame:
+    gen_debug_files: bool = True if len(debug_dir) else False
+    
+    df = clean_asset_data(df, asset, target_year)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/clean_asset_data.csv")
+
     df = gen_data(df, target_cur, fx_cache_path)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/gen_data.csv")
+
     df = compute_fifo(df)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/compute_fifo.csv")
     
     return df
 
 
-def get_pnl_df_from_trades(df: pd.DataFrame, asset: str, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
+def get_pnl_df_from_trades(df: pd.DataFrame, asset: str, target_cur: str, fx_cache_path: str, debug_dir: str) -> pd.DataFrame:
+    gen_debug_files: bool = True if len(debug_dir) else False
+    
     df = clean_asset_data_from_trades(df, asset)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/clean_asset_data_from_trades.csv")
+
     df = gen_data_from_trades(df)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/gen_data_from_trades.csv")
+
     df = compute_fifo_from_trades(df, target_cur, fx_cache_path)
-    
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/compute_fifo_from_trades.csv")
+
     return df
 
 
-def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str, fx_cache_path: str, use_trades: bool) -> int:
+def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_csv_path: str, fx_cache_path: str, use_trades: bool, debug_dir: str) -> int:
     _dlog.log_dbg(f"Computing PnL")
 
     init_fx_cache(fx_cache_path)
@@ -39,9 +59,9 @@ def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_
     df: pd.DataFrame = get_df_from_csv(input_csv_path)
 
     if use_trades:
-        df = get_pnl_df_from_trades(df, asset, target_cur, fx_cache_path)
+        df = get_pnl_df_from_trades(df, asset, target_cur, fx_cache_path, debug_dir)
     else:
-        df = get_pnl_df(df, asset, target_cur, fx_cache_path)
+        df = get_pnl_df(df, asset, target_cur, year, fx_cache_path, debug_dir)
 
     if len(output_csv_path) > 0:
         write_df_to_csv(df, output_csv_path)

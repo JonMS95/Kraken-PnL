@@ -52,6 +52,7 @@ def gen_clean_events(df: pd.DataFrame) -> pd.DataFrame:
             crypto = group[group["subclass"] == "crypto"]
 
             if fiat.empty or crypto.empty:
+                _dlog.log_wng(f"Found trade with one or more empty fields: refid: {refid}, fiat: {fiat}, crypto: {crypto}")
                 continue
 
             fiat_row = fiat.iloc[0]
@@ -142,7 +143,7 @@ def add_fx_conversion(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def gen_data(df: pd.DataFrame, target_cur: str, fx_cache_path: str) -> pd.DataFrame:
+def gen_data(df: pd.DataFrame, target_cur: str) -> pd.DataFrame:
     _dlog.log_dbg(f"Generating data in currency: {target_cur}")
     df = gen_clean_events(df)
     df = add_fx_conversion(df, target_cur)

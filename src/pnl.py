@@ -15,38 +15,46 @@ def calc_pnl_from_df(df: pd.DataFrame, year: int) -> float:
     return df.loc[df["time"].dt.year == year, "pnl"].sum()
 
 
-def get_pnl_df(df: pd.DataFrame, asset: str, target_cur: str, target_year: int, fx_cache_path: str, debug_dir: str) -> pd.DataFrame:
+def get_pnl_df(df: pd.DataFrame, asset: str, target_cur: str, target_year: int, debug_dir: str) -> pd.DataFrame:
     gen_debug_files: bool = True if len(debug_dir) else False
-    
+    debug_file_suffix: str = ""
+
+    if gen_debug_files:
+        debug_file_suffix = "_" + asset + "_" + target_cur + "_" + str(target_year) + ".csv"
+
     df = clean_asset_data(df, asset, target_year)
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/clean_asset_data.csv")
+        write_df_to_csv(df, debug_dir + "/clean_asset_data" + debug_file_suffix)
 
-    df = gen_data(df, target_cur, fx_cache_path)
+    df = gen_data(df, target_cur)
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/gen_data.csv")
+        write_df_to_csv(df, debug_dir + "/gen_data" + debug_file_suffix)
 
     df = compute_fifo(df)
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/compute_fifo.csv")
+        write_df_to_csv(df, debug_dir + "/compute_fifo" + debug_file_suffix)
     
     return df
 
 
-def get_pnl_df_from_trades(df: pd.DataFrame, asset: str, target_cur: str, fx_cache_path: str, debug_dir: str) -> pd.DataFrame:
+def get_pnl_df_from_trades(df: pd.DataFrame, asset: str, target_cur: str, target_year: int, debug_dir: str) -> pd.DataFrame:
     gen_debug_files: bool = True if len(debug_dir) else False
-    
-    df = clean_asset_data_from_trades(df, asset)
+    debug_file_suffix: str = ""
+
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/clean_asset_data_from_trades.csv")
+        debug_file_suffix = "_" + asset + "_" + target_cur + "_" + str(target_year) + ".csv"
+
+    df = clean_asset_data_from_trades(df, asset, target_year)
+    if gen_debug_files:
+        write_df_to_csv(df, debug_dir + "/clean_asset_data_from_trades" + debug_file_suffix)
 
     df = gen_data_from_trades(df)
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/gen_data_from_trades.csv")
+        write_df_to_csv(df, debug_dir + "/gen_data_from_trades" + debug_file_suffix)
 
-    df = compute_fifo_from_trades(df, target_cur, fx_cache_path)
+    df = compute_fifo_from_trades(df, target_cur)
     if gen_debug_files:
-        write_df_to_csv(df, debug_dir + "/compute_fifo_from_trades.csv")
+        write_df_to_csv(df, debug_dir + "/compute_fifo_from_trades" + debug_file_suffix)
 
     return df
 
@@ -59,9 +67,9 @@ def get_pnl(input_csv_path: str, asset: str, target_cur: str, year: int, output_
     df: pd.DataFrame = get_df_from_csv(input_csv_path)
 
     if use_trades:
-        df = get_pnl_df_from_trades(df, asset, target_cur, fx_cache_path, debug_dir)
+        df = get_pnl_df_from_trades(df, asset, target_cur, year, debug_dir)
     else:
-        df = get_pnl_df(df, asset, target_cur, year, fx_cache_path, debug_dir)
+        df = get_pnl_df(df, asset, target_cur, year, debug_dir)
 
     if len(output_csv_path) > 0:
         write_df_to_csv(df, output_csv_path)

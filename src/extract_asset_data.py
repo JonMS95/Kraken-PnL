@@ -7,12 +7,14 @@ from utils_log import DataLogger
 _dlog : DataLogger = DataLogger()
 
 
-def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
+def clean_asset_data(df: pd.DataFrame, asset: str, target_year: int) -> pd.DataFrame:
     """
     Returns all the rows related to a given asset as well as the
     ones they share their refid with (buy/sell ops are paired).
     It removes all spare columns, leaving only these:
     refid,time,type,subclass,asset,amount,fee
+    Also, those rows which dates belong to a year greater than
+    target are removed.
 
     Example:
     
@@ -37,9 +39,13 @@ def clean_asset_data(df: pd.DataFrame, asset: str) -> pd.DataFrame:
     # Ensure type
     df["amount"] = pd.to_numeric(df["amount"])
     df["fee"] = pd.to_numeric(df["fee"])
+    df["time"] = pd.to_datetime(df["time"])
 
     # Remove spare columns
     df = df.drop(columns=["txid", "subtype", "aclass", "wallet", "balance"])
+
+    # Preserve only the rows for which year within time value is lower or equal than expected
+    df = df[df["time"].dt.year <= target_year]
 
     # Find refid's with target asset (including staking asset)
     # Example, ADA and ADA.S.

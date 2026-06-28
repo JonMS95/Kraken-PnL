@@ -57,6 +57,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--debug-dir",
+        "-d",
+        required=False,
+        default="",
+        help="Directory to store intermediate csv files"
+    )
+
+    parser.add_argument(
         "-t",
         "--trades",
         action="store_true",
@@ -84,10 +92,11 @@ def main() -> None:
     _dlog.log_inf(f"Currency: {args.currency}")
     _dlog.log_inf(f"Output CSV: {args.output or 'none'}")
     _dlog.log_inf(f"Fx cache path: {args.fx_cache_path}")
+    _dlog.log_inf(f"Debug csv files directory: {args.debug_dir}")
     _dlog.log_inf(f"Use trades file: {args.trades}")
 
     try:
-        pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path, args.trades)
+        pnl_asset_year = get_pnl(args.input, args.asset, args.currency, args.year, args.output, args.fx_cache_path, args.trades, args.debug_dir)
     except Exception as ex:
         _dlog.log_err(f"{ex}")
     finally:

@@ -50,7 +50,7 @@ pip install -r requirements.txt
 Run the script via CLI:
 
 ```bash
-python3 src/main.py -i <input_csv> -o <output_csv> -a <asset> -c <currency> -y <year> -f <cache_file> -v
+python3 src/main.py -i <input_csv> -o <output_csv> -a <asset> -c <currency> -y <year> -f <cache_file> -d <debug_dir> -v
 ```
 
 ---

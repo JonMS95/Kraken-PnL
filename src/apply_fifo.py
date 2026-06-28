@@ -110,7 +110,7 @@ def compute_fifo(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(results)
 
 
-def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_path: str) -> pd.DataFrame:
+def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str) -> pd.DataFrame:
 
     fifo = deque()
     results = []
@@ -147,7 +147,7 @@ def compute_fifo_from_trades(df: pd.DataFrame, target_currency: str, fx_cache_pa
             remaining = row["vol"]
             fifo_cost = 0.0
 
-            _dlog.log_dbg(f"Sell op: asset: {asset}, vol: {row['vol']}, cur: {payment_currency}, net_amount: {row['net_amount']}, date: {row['time']}")
+            _dlog.log_dbg(f"Sell op: time: {row['time']}, asset: {asset}, vol: {row['vol']: .4f}, cur: {payment_currency}, net_amount: {row['net_amount']: .2f}")
 
             while remaining > 0:
 
